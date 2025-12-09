@@ -1,0 +1,20 @@
+[
+  {
+    "documentNumber": "420",
+    "workflowName": "일반변경관리",
+    "workType": "변경관리",
+    "createDate": "2025-07-17 08:50:13"
+  },
+  {
+    "documentNumber": "413",
+    "workflowName": "표준변경관리",
+    "workType": "변경관리",
+    "createDate": "2024-11-13 14:41:38"
+  },
+  {
+    "documentNumber": "412",
+    "workflowName": "긴급변경관리",
+    "workType": "변경관리",
+    "createDate": "2024-11-13 14:40:29"
+  }
+]
