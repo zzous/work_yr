@@ -2,7 +2,7 @@
   <v-container class="listwrap">
     <!-- 헤더 -->
     <div class="d-flex align-center mb-4">
-      <v-icon icon="mdi-file-document" size="24" class="mr-2"></v-icon>
+      <v-icon icon="mdi-image-filter-none" size="24" class="mr-2"></v-icon>
       <h2 class="text-h6 font-weight-medium">워크플로우목록 ({{ filteredWorkflows.length }})</h2>
     </div>
 
@@ -41,11 +41,19 @@
 
     <!-- 테이블 -->
     <v-card>
-      <v-data-table>
+      <v-data-table
         :headers="headers"
-        :items="filteredWorkflows"      
-        item-value="documentNumber"
+        :items="workflows"
+        :items-per-page="itemsPerPage"
       >
+      <template v-slot:item="{ item }">
+        <tr>
+          <td style="text-align: left;">{{ item.documentNumber }}</td>
+          <td style="text-align: left;">{{ item.workflowName }}</td>
+          <td style="text-align: left;">{{ item.workType }}</td>
+          <td style="text-align: left;">{{ item.createDate }}</td>
+        </tr>
+      </template>
       </v-data-table>
     </v-card>
 
@@ -63,7 +71,7 @@
         variant="outlined"
         @click="addWorkflow"
       >
-        등록 버튼 추가
+        워크플로우 등록
       </v-btn>
     </div>
   </v-container>
@@ -71,7 +79,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import workflow_data from '../data/workflow_data.json'
+
+const router = useRouter()
 
 // 워크플로우 데이터
 const workflows = ref(workflow_data)
@@ -86,25 +97,28 @@ const headers = [
     title: '문서번호',
     key: 'documentNumber',
     align: 'start',
-    sortable: true
+    sortable: false,
+    width: '120px'
   },
   {
     title: '워크 플로우 명',
     key: 'workflowName',
     align: 'start',
-    sortable: true
+    sortable: false,
   },
   {
     title: '업무유형',
     key: 'workType',
     align: 'start',
-    sortable: true
+    sortable: false,
+    width: '150px'
   },
   {
     title: '작성일자',
     key: 'createDate',
     align: 'start',
-    sortable: true
+    sortable: true,
+    width: '200px'
   }
 ]
 
@@ -135,7 +149,7 @@ const refresh = () => {
 
 // 등록 버튼 클릭
 const addWorkflow = () => {
-  console.log('등록 버튼 클릭')
+  router.push('/workflow/create')
 }
 
 // 페이지 변경 핸들러
@@ -160,6 +174,7 @@ const onItemsPerPageChange = (newItemsPerPage) => {
   background-color: #f5f5f5;
   font-weight: 600;
   color: #333;
+  text-align: left !important;
 }
 
 :deep(.v-data-table__tbody tr:hover) {
@@ -168,5 +183,16 @@ const onItemsPerPageChange = (newItemsPerPage) => {
 
 :deep(.v-data-table__tbody td) {
   padding: 12px 16px;
+  text-align: left !important;
+}
+
+:deep(.v-data-table__thead th .v-data-table-header__content) {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
+:deep(.v-data-table__tbody td .v-data-table__td-content) {
+  text-align: left !important;
+  justify-content: flex-start !important;
 } */
 </style>
