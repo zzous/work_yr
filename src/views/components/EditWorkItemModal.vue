@@ -29,7 +29,7 @@
           <span class="text-body-1 font-weight-medium"> 워크플로우</span>
         </div>
 
-        <v-form ref="formRef">
+        <v-form ref="workFormRef">
           <v-row>
             <!-- WORK 그룹명 -->
             <v-col cols="12" class="d-flex align-center">
@@ -47,8 +47,8 @@
               <v-select
                 v-model="workData.workType"
                 :items="workTypes"
-                item-title="label"
-                item-value="workCode"
+                item-title="name"
+                item-value="code"
                 variant="outlined"
                 density="compact"
                 placeholder="WORK 선택"
@@ -97,7 +97,7 @@
         <v-btn
           color="primary"
           variant="elevated"
-          @click="onConfirm"
+          @click="onClickSave"
           prepend-icon="mdi-content-save"
         >
           저장
@@ -125,24 +125,30 @@ export default {
     modelValue: {
       type: Boolean,
       default: false
+    },
+    groupName: {
+      type: String,
+      required: true
     }
   },
-  emits: ['updateModelValue', 'confirm'],
+  emits: ['update:ModelValue', 'saveWorkItem'],
   setup(props, { emit }) {
-    const formRef = ref(null)
+    const workFormRef = ref(null)
 
     // WORK 데이터
     const workData = ref({
-      groupName: '그룹추가',
+      groupName: props.groupName,
       workType: '',
       paymentRequired: false,
       description: ''
     })
+    console.log('### workData: ', workData.value)
+    console.log('### props.groupName: ', props.groupName)
 
     const workTypes = Object.values(WORK_TYPE).map(work => ({
       code: work.code,
       name: work.name ?? '',
-    }).name)
+    }))
 
     // 모달 열림/닫힘 상태
     const dialog = computed({
@@ -164,14 +170,12 @@ export default {
     }
 
     // 확인 버튼
-    const onConfirm = async () => {
-      const { valid } = await formRef.value.validate()
-      if (valid) {
-       console.log('workData.value:', workData.value);
-       
-        emit('confirm', {
-          ...workData.value,
-        })
+    const onClickSave = async () => {
+      const validate = await workFormRef.value.validate()
+
+      if (validate.valid) {
+        console.log('workData.value:', workData.value);
+        emit('saveWorkItem', { ...workData.value })
         closeModal()
       }
     }
@@ -179,22 +183,21 @@ export default {
     // 폼 초기화
     const resetForm = () => {
       workData.value = {
-        groupName: '그룹추가',
-        workType: '',
-        paymentRequired: false,
-        description: ''
+        workCode: '',
+        workDesc: '',
+        approvalYn: 'N',
       }
-      formRef.value?.resetValidation()
+      workFormRef.value?.resetValidation()
     }
 
     return {
-      formRef,
+      workFormRef,
       workTypes,
       workData,
       dialog,
       onDialogToggle,
       closeModal,
-      onConfirm,
+      onClickSave,
       WORK_TYPE
     }
   }

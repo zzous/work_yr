@@ -1,1 +1,230 @@
-.listwrap { background-color: #F7F9FA; }
+.listwrap {
+  background-color: #F7F9FA;
+}
+
+/* groups-container: group-wrap들을 감싸는 컨테이너 */
+.groups-container {
+  display: flex;
+  width: 100%;
+  gap: 16px;
+}
+
+/* state.wfGroupList.length === 1일 때: 전체 너비 */
+.groups-container.single {
+  flex-direction: column;
+}
+
+.groups-container.single-group .group-wrap {
+  width: 100%;
+}
+
+/* state.wfGroupList.length === 2일 때: 가로로 균등분배 */
+.groups-container.double {
+  flex-direction: row;
+}
+
+.groups-container.double-group .group-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-wrap {
+  display: flex;
+  flex-direction: column;
+  background-color: aquamarine;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: #00796b;
+  color: white;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 0;
+}
+
+.workflow-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.items-wrap {
+  color: #1A0C32;
+  display: flex;
+  overflow-x: auto;
+  padding: 16px;
+  background-color: #f5f5f5;
+  gap: 12px;
+  min-height: 400px;
+}
+
+.item-card {
+  min-width: 250px;
+  max-width: 250px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  background-color: #E3F2FD;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 16px 13px;
+}
+
+.stage-title {
+  flex: 1;
+}
+
+.item-content {
+  flex: 1;
+  min-height: 200px;
+}
+
+.work-item {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.work-type {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.work-name {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.approval-type {
+  font-size: 12px;
+  color: #666;
+}
+
+.empty-work {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 20px;
+}
+
+.stage-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* 스크롤바 스타일링 */
+.items-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+
+.items-wrap::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.items-wrap::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.items-wrap::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* group-items 스타일 (items-wrap 대체) */
+.group-items {
+  display: flex;
+  overflow-x: auto;
+  padding: 16px;
+  background-color: #f5f5f5;
+  gap: 12px;
+  min-height: 400px;
+}
+
+/* wfGroupList.length === 1일 때 가로 배치 */
+.item-content.horizontal-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+/* wfGroupList.length >= 2일 때 세로 배치 */
+.item-content.vertical-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.work-item {
+  min-width: 200px;
+}
+
+.horizontal-layout .work-item {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.vertical-layout .work-item {
+  margin-bottom: 16px;
+}
+
+.item-content.horizontal-layout::-webkit-scrollbar {
+  height: 6px;
+}
+
+.item-content.horizontal-layout::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.item-content.horizontal-layout::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.item-content.horizontal-layout::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.group-items::-webkit-scrollbar {
+  height: 8px;
+}
+
+.group-items::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.group-items::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.group-items::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

@@ -122,30 +122,8 @@ const headers = [
   }
 ]
 
-// 현재 날짜/시간
-const currentDateTime = ref(new Date().toLocaleString('ko-KR', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit'
-}).replace(/\./g, '-').replace(/,/g, ''))
-
 // 검색 필터링된 데이터
 const filteredWorkflows = computed(() => workflows.value)
-
-// 새로고침
-const refresh = () => {
-  currentDateTime.value = new Date().toLocaleString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }).replace(/\./g, '-').replace(/,/g, '')
-}
 
 // 등록 버튼 클릭
 const addWorkflow = () => {
@@ -166,7 +144,7 @@ const onItemsPerPageChange = (newItemsPerPage) => {
 
 <style scoped>
 /* 테이블 스타일 커스터마이징 */
-/* :deep(.v-data-table) {
+:deep(.v-data-table) {
   background-color: white;
 }
 
@@ -194,5 +172,5 @@ const onItemsPerPageChange = (newItemsPerPage) => {
 :deep(.v-data-table__tbody td .v-data-table__td-content) {
   text-align: left !important;
   justify-content: flex-start !important;
-} */
+}
 </style>

@@ -34,7 +34,7 @@
           </v-col>
           <v-col cols="10">
             <v-text-field
-              v-model="workFlowName"
+              v-model="state.wfInfo.wfName"
               variant="outlined"
               density="compact"
               required
@@ -49,7 +49,7 @@
           </v-col>
           <v-col cols="10">
             <v-textarea
-              v-model="workFlowDescription"
+              v-model="state.wfInfo.wfDesc"
               variant="outlined"
               density="compact"
               rows="4"
@@ -64,7 +64,7 @@
           <v-col cols="10">
             <div class="d-flex align-center">
               <v-text-field
-                v-model="workFlowGroupName"
+                v-model="state.inputGroupName"
                 variant="outlined"
                 density="compact"
                 class="mr-2"
@@ -73,8 +73,8 @@
               <v-btn
                 color="primary"
                 variant="elevated"
-                @click="addGroup"
-                :disabled="!workFlowGroupName"
+                @click="addWorkGroup"
+                :disabled="!state.inputGroupName"
               >
                 그룹추가
               </v-btn>
@@ -83,14 +83,13 @@
         </v-row>
       </v-card-text>
     </v-card>
-
     <!-- 워크플로우 설정 -->
     <v-card class="mb-6" elevation="1">
       <v-card-title class="text-h6 font-weight-medium pa-4">
         워크플로우 설정
       </v-card-title>
       <v-card-text>
-        <div v-if="workflowGroups.length === 0" class="text-center py-12">
+        <div v-if="wfGroupList.length === 0" class="text-center py-12">
           <v-icon icon="mdi-image-outline" size="64" class="mb-4 text-medium-emphasis"></v-icon>
           <div class="text-body-1 text-medium-emphasis">
             등록된 그룹이 없습니다. 그룹을 추가해 주세요.
@@ -98,7 +97,8 @@
         </div>
         <div v-else>
           <WorkFlowChart
-            :workflowGroups="workflowGroups"
+            ref="workflowChartRef"
+            :wfGroupList="wfGroupList"
           />
         </div>
       </v-card-text>
@@ -125,56 +125,72 @@
   </v-container>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script>
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import WorkFlowChart from './components/WorkFlowChart.vue'
 
-const router = useRouter()
-
-const workFlowName = ref('')
-const workFlowDescription = ref('')
-const workFlowGroupName = ref('변경관리')
-const workflowGroups = ref([])
-
-// 그룹 테이블 헤더 (그룹이 추가되면 사용)
-const groupHeaders = [
-  {
-    title: '그룹명',
-    key: 'name',
-    align: 'start'
+export default {
+  name: 'EditWorkFlow',
+  components: {
+    WorkFlowChart
   },
-  {
-    title: '설명',
-    key: 'description',
-    align: 'start'
-  }
-]
+  setup() {
+    const router = useRouter()
 
-// 그룹 추가
-const addGroup = () => {
-  if (workFlowGroupName.value) {
-    workflowGroups.value.push({
-      name: workFlowGroupName.value,
-      description: ''
+    const state = reactive({
+      wfInfo: {
+        wfName: '', // 워크플로우명
+        wfDesc: '', // 워크플로우 설명
+      },
+      inputGroupName: '' // 워크플로우 그룹명
     })
-    workFlowGroupName.value = ''
+
+    const workflowChartRef = ref(null) // 현재 워크플로우 차트 리스트
+    const wfGroupList = ref([]) // 그룹 리스트
+
+    // 그룹 추가
+    const addWorkGroup = () => {
+      // 그룹 리스트에 존재하는 그룹명 중복 체크
+      if (wfGroupList.value.some(group => group.groupName === state.inputGroupName)) { 
+        alert('이미 존재하는 그룹명입니다.');
+        return
+      }
+
+      wfGroupList.value.push({
+        groupName: state.inputGroupName,
+        groupDesc: '', // 그룹 설명 현재는 미입력
+        groupItemList: [] // 그룹 아이템 리스트
+      })
+
+      state.inputGroupName = '';
+      console.log('### wfGroupList: ', wfGroupList.value)
+    }
+
+    // 저장
+    const saveWorkflow = () => {
+      console.log('워크플로우 저장:', {
+        wfName: state.wfInfo.wfName,
+        wfDesc: state.wfInfo.wfDesc,
+        wfGroupList: wfGroupList.value
+      })
+      // 저장 로직 구현
+    }
+
+    // 목록으로 이동
+    const goToList = () => {
+      router.push('/')
+    }
+
+    return {
+      state,
+      workflowChartRef,
+      wfGroupList,
+      addWorkGroup,
+      saveWorkflow,
+      goToList
+    }
   }
-}
-
-// 저장
-const saveWorkflow = () => {
-  console.log('워크플로우 저장:', {
-    name: workFlowName.value,
-    description: workFlowDescription.value,
-    groups: workflowGroups.value
-  })
-  // 저장 로직 구현
-}
-
-// 목록으로 이동
-const goToList = () => {
-  router.push('/')
 }
 </script>
 

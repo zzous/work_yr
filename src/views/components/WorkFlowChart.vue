@@ -1,15 +1,23 @@
 <template>
-  <div class="workflow-chart">
+  <div 
+    class="groups-container"
+    :class="{ 'single': state.wfGroupList.length === 1, 'double': state.wfGroupList.length >= 2 }"
+  >
+    <div 
+      class="group-wrap" 
+      v-for="(group, groupIdx) in state.wfGroupList" 
+      :key="groupIdx"
+    >
     <!-- 헤더 -->
-    <div class="workflow-header">
-      <h3 class="workflow-title">{{ groupName || '변경관리' }}</h3>
+    <div class="group-header">
+      <h3 class="workflow-title">{{group.groupName}}</h3>
       <div class="workflow-actions">
         <v-btn
           variant="outlined"
           color="error"
           size="small"
           class="mr-2"
-          @click="openAddWorkModal"
+          @click="onClickAddWork(group, groupIdx)"
         >
           + WORK 추가
         </v-btn>
@@ -19,45 +27,41 @@
           size="small"
           @click="removeWork"
         >
-          - WORK GROUP 삭제
+          - GROUP 삭제
         </v-btn>
       </div>
     </div>
 
-    <EditWorkItemModal
-      v-model="showAddWorkModal"
-      @confirm="handleWorkAdded"
-    />
-
     <!-- 워크플로우 단계 카드들 -->
-    <div class="workflow-stages">
+    <div class="items-wrap">
       <div
-        v-for="(stage, index) in workflowStages"
+        v-for="(item, itemIdx) in group.wfGroupItemList"
         :key="index"
-        class="stage-card"
+        class="item-card"
       >
         <!-- 단계 제목 -->
-        <div class="stage-header">
-          <v-icon :icon="stage.icon" size="20" class="mr-2"></v-icon>
-          <span class="stage-title">{{ stage.title }}</span>
+        <div class="item-header">
+          <v-icon icon="mdi-text-box-check-outline" size="20" class="mr-2"></v-icon>
+          <span class="stage-title">{{ getWorkCodeName(item.workCode) }}</span>
         </div>
 
         <!-- WORK 항목들 -->
-        <div class="stage-content">
-          <div
-            v-for="(work, workIndex) in getWorksForStage(stage.key)"
-            :key="workIndex"
-            class="work-item"
-          >
-            <div class="work-type">WORK 신청</div>
-            <div class="work-name">{{ work.name }}</div>
-            <div class="approval-type">
-              결재 승인 타입: {{ work.approvalType }}
+        <div class="item-content" v-if="group.wfGroupItemList.length > 0">
+          <!-- <div class="work-item"> -->
+            <div class="work-type">WORK 컴포넌트</div>
+            <div class="work-name">{{ item.workCode }}</div>
+            <v-icon icon="mdi-text-box-check-outline" size="18" class="mr-2"></v-icon>
+            WORK 컴포넌트
+            <div class="work-name">{{ item.workDesc }}</div>
+            <div class="approval-type" v-if="item.approvalYn === 'Y'">
+              <v-icon icon="mdi-account-check-outline" size="18" class="mr-2"></v-icon>
+              결재
             </div>
-          </div>
-          <div v-if="getWorksForStage(stage.key).length === 0" class="empty-work">
-            WORK 없음
-          </div>
+          <!-- </div> -->
+          
+        </div>
+        <div v-else class="empty-work">
+          WORK 없음
         </div>
 
         <!-- 액션 버튼 -->
@@ -67,7 +71,7 @@
             size="small"
             variant="text"
             color="primary"
-            @click="editStage(stage.key)"
+            @click="onClckEditItem(item.key)"
           >
             <v-icon icon="mdi-pencil" size="18"></v-icon>
           </v-btn>
@@ -76,18 +80,25 @@
             size="small"
             variant="text"
             color="error"
-            @click="deleteStage(stage.key)"
+            @click="onClickDeleteItem(item.key)"
           >
             <v-icon icon="mdi-delete" size="18"></v-icon>
           </v-btn>
         </div>
       </div>
     </div>
+
+    </div>
+    <EditWorkItemModal
+      v-model="showAddWorkModal"
+      :groupName="state.selectedGroupName"
+      @saveWorkItem="onSaveWorkItem"
+    />
   </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch, reactive } from 'vue'
 import EditWorkItemModal from './EditWorkItemModal.vue'
 import { WORK_TYPE } from '../../enumeration/workType'
 
@@ -97,97 +108,102 @@ export default {
     EditWorkItemModal
   },
   props: {
-    workflowGroups: {
+    wfGroupList: {
       type: Array,
       default: () => []
+    },
+    workflowData: {
+      type: Object,
+      default: () => null
     }
   },
   setup(props) {
-    // 모달 상태
     const showAddWorkModal = ref(false)
+    const workflowStages = ref([]) // 워크플로우 단계
+    const currentWork = ref([]) // 저장전 현 상태 WORK 데이터
 
-    // 워크플로우 단계 정의
-    const workflowStages = ref([
-      // {
-      //   key: 'registration',
-      //   title: '등록',
-      //   icon: 'mdi-file-document-edit'
-      // },
-      // {
-      //   key: 'riskAnalysis',
-      //   title: '위험분석',
-      //   icon: 'mdi-alert-circle'
-      // },
-      // {
-      //   key: 'approval',
-      //   title: '승인',
-      //   icon: 'mdi-check-circle'
-      // },
-      // {
-      //   key: 'preparation',
-      //   title: '준비',
-      //   icon: 'mdi-cog'
-      // },
-      // {
-      //   key: 'execution',
-      //   title: '실행',
-      //   icon: 'mdi-play-circle'
-      // },
-      // {
-      //   key: 'test',
-      //   title: '테스트단계',
-      //   icon: 'mdi-test-tube'
-      // },
-      // {
-      //   key: 'review',
-      //   title: '결과리뷰',
-      //   icon: 'mdi-file-document-check'
-      // },
-      // {
-      //   key: 'completion',
-      //   title: '완료',
-      //   icon: 'mdi-check-all'
-      // }
-    ])
-
-    // WORK 데이터
-    const works = ref([])
-
-    // 그룹명 (첫 번째 그룹의 이름 사용)
-    const groupName = computed(() => {
-      return props.workflowGroups.length > 0 ? props.workflowGroups[0].name : '변경관리'
+    const state = reactive({
+      wfGroupList: props.wfGroupList,
+      selectedGroupIdx: -1,
+      selectedGroupName: '',
+      wfGroupItemList: [
+        {
+          workCode: '',
+          workDesc: '',
+          approvalYn: 'N',
+          displayOrder: 1,
+        }
+      ],
     })
 
-    // 특정 단계에 해당하는 WORK 가져오기
-    const getWorksForStage = (stageKey) => {
-      return works.value.filter(work => work.stage === stageKey)
+    // props.wfGroupList가 변경될 때 state.wfGroupList 업데이트
+    watch(() => props.wfGroupList, (newList) => {
+      // 각 그룹에 wfGroupItemList가 없으면 초기화
+      const updatedList = newList.map(group => ({
+        ...group,
+        wfGroupItemList: group.wfGroupItemList || []
+      }))
+      
+      state.wfGroupList = updatedList
+    }, { immediate: true, deep: true })
+
+    // watch(currentWork, (newVal) => {
+    //   console.log('### currentWork 변경: ', newVal)
+    // })
+
+    // 현재 구성된 work enum 목록
+    const workTypes = Object.values(WORK_TYPE).map(work => ({ 
+      code: work.code,
+      name: work.name ?? '',
+    }))
+
+    const onClickAddWork = (group, groupIdx) => {
+      console.log('### group: ', group)
+      console.log('### onClickAddWork: ', groupIdx)
+      state.selectedGroupIdx = groupIdx
+      state.selectedGroupName = group.groupName
+      openAddWorkModal()
     }
 
     // WORK 추가 모달 열기
-    const openAddWorkModal = () => {
-      showAddWorkModal.value = true
-    }
+    const openAddWorkModal = () => { showAddWorkModal.value = true }
 
-    // workType으로 해당 단계명 찾기
-    const getStageFromWorkType = (workType) => {
-      const findWorkType = WORK_TYPE.find(work => work.code === workType)
-      return findWorkType
+    // 특정 단계에 해당하는 WORK 가져오기
+    const getWorksForStage = (stageKey) => {
+      console.log('### stageKey: ', stageKey)
+      console.log('### currentWork: ', currentWork.value)
+      return currentWork.value.filter(work => work.stage === stageKey)
     }
 
     // WORK 추가 완료 처리
-    const handleWorkAdded = (workData) => {
-      console.log('추가된 WORK 데이터:', workData)
-      // works 배열에 새 WORK 추가
-      const stage = getStageFromWorkType(workData.workType)
-      works.value.push({
-        id: workData.id,
-        stage: stage,
-        name: workData.workType,
-        approvalType: workData.paymentRequired ? '결제 필요' : '확인',
-        description: workData.description,
-        groupName: workData.groupName
-      })
-      console.log('전체 works:', works.value)
+    const onSaveWorkItem = (workData) => {
+      console.log('### onSaveWorkItem: ', workData)
+      console.log('### state.selectedGroupIdx: ', state.selectedGroupIdx)
+      console.log('### state.wfGroupList: ', state.wfGroupList)
+
+      const group = state.wfGroupList[state.selectedGroupIdx]
+  
+      if(state.selectedGroupIdx > -1 && group){
+        // 새 아이템 추가
+        group.wfGroupItemList.push({
+            workCode: workData.workType,
+            workDesc: workData.description || '',
+            approvalYn: workData.paymentRequired ? 'Y' : 'N',
+          })
+      } else {
+        console.log('check selectedGroupIdx, group value!!')
+      }
+
+      console.log('### 추가 후 state.wfGroupList: ', state.wfGroupList)
+      console.log('### 추가 후 group.wfGroupItemList: ', group.wfGroupItemList)
+    }
+
+    // workType으로 해당 단계명 찾기
+    const getWorkCodeName = (workType) => {
+      console.log('### workType: ', workType)
+      const findName = workTypes.find(work => work.code === workType)
+      console.log('### findName: ', findName)
+      return findName.name;
     }
 
     // WORK 제거
@@ -208,149 +224,95 @@ export default {
       // 단계 삭제 로직 구현
     }
 
+    const updateWorkflow = (workflowData) => {
+      if (!workflowData || !workflowData.wfGroupList) return
+      
+      workflowStages.value = []
+      currentWork.value = []
+      
+      workflowData.wfGroupList.forEach((group, groupIdx) => {
+        // workflowStages에 그룹 추가
+        workflowStages.value.push({
+          key: group.wfGroupName, // 그룹명을 key로 사용
+          title: group.wfGroupName,
+          icon: 'mdi-folder-outline', // 기본 아이콘
+          displayOrder: group.displayOrder || (groupIdx + 1),
+          wfGroupDesc: group.wfGroupDesc || ''
+        })
+        
+        // currentWork에 각 그룹의 아이템들 추가
+        if (group.wfGroupItemList && Array.isArray(group.wfGroupItemList)) {
+          group.wfGroupItemList.forEach((item, itemIndex) => {
+            // workType code로 name 찾기
+            const workTypeInfo = workTypes.find(wt => wt.code === item.wfComponentsCode)
+            
+            currentWork.value.push({
+              componentsCode: `${group.wfGroupName}-${itemIndex}`,
+              // groupCode: group.wfGroupName, // 그룹명을 stage로 사용
+              // name: workTypeInfo ? workTypeInfo.name : item.wfComponentsCode,
+              approvalYn: item.approvalYn || 'N',
+              groupItemDesc: item.wfGroupItemDesc || '',
+              // groupName: group.wfGroupName,
+              workType: item.wfComponentsCode,
+              displayOrder: item.displayOrder || (itemIndex + 1)
+            })
+          })
+        }
+      })
+      
+      console.log('### workflowStages 업데이트:', workflowStages.value)
+      console.log('### currentWork 업데이트:', currentWork.value)
+    }
+
+    // // JSON 구조로 변환하는 함수
+    // const convertToWorkflowDTO = (wfName, wfDesc, serviceGroupUuid) => {
+    //   // 그룹별로 work 데이터 그룹화
+    //   const groupMap = new Map()
+      
+    //   currentWork.value.forEach((work, index) => {
+    //     const groupName = work.groupName
+    //     if (!groupMap.has(groupName)) {
+    //       groupMap.set(groupName, {
+    //         wfGroupName: groupName,
+    //         wfGroupDesc: '', // 그룹 설명은 별도로 관리 필요
+    //         displayOrder: props.workflowGroups.findIndex(g => g.name === groupName) + 1,
+    //         wfGroupItemList: []
+    //       })
+    //     }
+        
+    //     const group = groupMap.get(groupName)
+    //     group.wfGroupItemList.push({
+    //       wfComponentsCode: work.workType, // code 값
+    //       wfGroupItemDesc: work.description || '',
+    //       approvalYn: work.paymentRequired ? 'Y' : 'N',
+    //       displayOrder: work.displayOrder || (group.wfGroupItemList.length + 1)
+    //     })
+    //   })
+      
+    //   return {
+    //     wfName,
+    //     wfDesc,
+    //     serviceGroupUuid,
+    //     wfGroupList: Array.from(groupMap.values())
+    //   }
+    // }
+
     return {
       showAddWorkModal,
+      state,
       workflowStages,
-      works,
-      groupName,
+      currentWork,
       getWorksForStage,
       openAddWorkModal,
-      getStageFromWorkType,
-      handleWorkAdded,
+      onClickAddWork,
+      getWorkCodeName,
+      onSaveWorkItem,
       removeWork,
       editStage,
       deleteStage,
-      WORK_TYPE
+      // convertToWorkflowDTO,
+      WORK_TYPE,
     }
   }
 }
 </script>
-
-<style scoped>
-.workflow-chart {
-  width: 100%;
-}
-
-.workflow-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background-color: #00796b;
-  color: white;
-  border-radius: 4px 4px 0 0;
-  margin-bottom: 0;
-}
-
-.workflow-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.workflow-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.workflow-stages {
-  display: flex;
-  overflow-x: auto;
-  padding: 16px;
-  background-color: #f5f5f5;
-  gap: 12px;
-  min-height: 400px;
-}
-
-.stage-card {
-  min-width: 250px;
-  max-width: 250px;
-  background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.stage-header {
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  font-size: 16px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.stage-title {
-  flex: 1;
-}
-
-.stage-content {
-  flex: 1;
-  min-height: 200px;
-}
-
-.work-item {
-  margin-bottom: 16px;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-}
-
-.work-type {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.work-name {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.approval-type {
-  font-size: 12px;
-  color: #666;
-}
-
-.empty-work {
-  text-align: center;
-  color: #999;
-  font-size: 14px;
-  padding: 20px;
-}
-
-.stage-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e0e0e0;
-}
-
-/* 스크롤바 스타일링 */
-.workflow-stages::-webkit-scrollbar {
-  height: 8px;
-}
-
-.workflow-stages::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.workflow-stages::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.workflow-stages::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-</style>
