@@ -1,17 +1,17 @@
 <template>
-  <v-container>
+  <v-container class="editwrap">
     <!-- 헤더 -->
-    <div class="d-flex align-center mb-4">
+    <!-- <div class="d-flex align-center mb-4">
       <v-icon icon="mdi-image-filter-none" size="24" class="mr-2"></v-icon>
       <h2 class="text-h6 font-weight-medium">워크플로우 생성</h2>
+    </div> -->
+    <div class="hwrap">
+      <v-icon icon="mdi-image-filter-none" size="24" class="title-icon"></v-icon>
+      <h2 class="title-text">워크플로우 생성</h2>
     </div>
 
     <!-- 안내 박스 -->
-    <v-alert
-      variant="tonal"
-      class="mb-6"
-      density="compact"
-    >
+    <v-alert variant="tonal" class="notice-wrap mb-6" density="compact">
       <div class="d-flex align-start">
         <v-icon icon="mdi-text-box-edit-outline" class="mr-2 mt-1"></v-icon>
         <div>
@@ -24,6 +24,7 @@
         </div>
       </div>
     </v-alert>
+    wfGroupList:{{ wfGroupList }}
 
     <!-- 워크플로우 기본 정보 -->
     <v-card class="mb-6" elevation="1">
@@ -33,13 +34,8 @@
             워크플로우명
           </v-col>
           <v-col cols="10">
-            <v-text-field
-              v-model="state.wfInfo.wfName"
-              variant="outlined"
-              density="compact"
-              required
-              hide-details="auto"
-            >
+            <v-text-field v-model="state.wfInfo.wfName" variant="outlined" density="compact" required
+              hide-details="auto">
             </v-text-field>
           </v-col>
         </v-row>
@@ -48,13 +44,8 @@
             워크플로우 설명
           </v-col>
           <v-col cols="10">
-            <v-textarea
-              v-model="state.wfInfo.wfDesc"
-              variant="outlined"
-              density="compact"
-              rows="4"
-              hidse-details="auto"
-            ></v-textarea>
+            <v-textarea v-model="state.wfInfo.wfDesc" variant="outlined" density="compact" rows="4"
+              hidse-details="auto"></v-textarea>
           </v-col>
         </v-row>
         <v-row>
@@ -63,19 +54,9 @@
           </v-col>
           <v-col cols="10">
             <div class="d-flex align-center">
-              <v-text-field
-                v-model="state.inputGroupName"
-                variant="outlined"
-                density="compact"
-                class="mr-2"
-                hide-details="auto"
-              ></v-text-field>
-              <v-btn
-                color="primary"
-                variant="elevated"
-                @click="addWorkGroup"
-                :disabled="!state.inputGroupName"
-              >
+              <v-text-field v-model="state.inputGroupName" variant="outlined" density="compact" class="mr-2"
+                hide-details="auto"></v-text-field>
+              <v-btn color="primary" variant="elevated" @click="onClickAddGroup" :disabled="!state.inputGroupName">
                 그룹추가
               </v-btn>
             </div>
@@ -96,29 +77,17 @@
           </div>
         </div>
         <div v-else>
-          <WorkFlowChart
-            ref="workflowChartRef"
-            :wfGroupList="wfGroupList"
-          />
+          <WorkFlowChart :wfGroupList="wfGroupList" @changeWorkflow="onChangeWorkflow" />
         </div>
       </v-card-text>
     </v-card>
 
     <!-- 하단 버튼 -->
     <div class="d-flex justify-center gap-4 mb-6">
-      <v-btn prepend-icon="mdi-content-save"
-        color="primary"
-        variant="elevated"
-        @click="saveWorkflow"
-      >
+      <v-btn prepend-icon="mdi-content-save" color="primary" variant="elevated" @click="saveWorkflow">
         저장
       </v-btn>
-      <v-btn
-        prepend-icon="mdi-format-list-bulleted"
-        color="primary"
-        variant="outlined"
-        @click="goToList"
-      >
+      <v-btn prepend-icon="mdi-format-list-bulleted" color="primary" variant="outlined" @click="goToList">
         목록
       </v-btn>
     </div>
@@ -146,18 +115,18 @@ export default {
       inputGroupName: '' // 워크플로우 그룹명
     })
 
-    const workflowChartRef = ref(null) // 현재 워크플로우 차트 리스트
     const wfGroupList = ref([]) // 그룹 리스트
 
     // 그룹 추가
-    const addWorkGroup = () => {
+    const onClickAddGroup = () => {
       // 그룹 리스트에 존재하는 그룹명 중복 체크
-      if (wfGroupList.value.some(group => group.groupName === state.inputGroupName)) { 
+      if (wfGroupList.value
+        && wfGroupList.value.some(group => group.groupName === state.inputGroupName)) {
         alert('이미 존재하는 그룹명입니다.');
         return
       }
 
-      wfGroupList.value.push({
+      wfGroupList.value?.push({
         groupName: state.inputGroupName,
         groupDesc: '', // 그룹 설명 현재는 미입력
         groupItemList: [] // 그룹 아이템 리스트
@@ -184,9 +153,8 @@ export default {
 
     return {
       state,
-      workflowChartRef,
       wfGroupList,
-      addWorkGroup,
+      onClickAddGroup,
       saveWorkflow,
       goToList
     }
