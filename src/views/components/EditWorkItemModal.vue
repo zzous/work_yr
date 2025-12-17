@@ -79,7 +79,7 @@
 
 <script>
 import { ref, computed, watch, reactive, nextTick } from 'vue'
-import { WORK_TYPE } from '../../enumeration/workType'
+import { WORK_TYPE } from '../../enumeration/worktype'
 
 export default {
   name: 'EditWorkItemModal',

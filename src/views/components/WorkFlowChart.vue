@@ -81,7 +81,7 @@
 <script>
 import { ref, computed, onMounted, watch, reactive } from 'vue'
 import EditWorkItemModal from './EditWorkItemModal.vue'
-import { WORK_TYPE } from '../../enumeration/workType'
+import { WORK_TYPE } from '../../enumeration/worktype'
 
 export default {
   name: 'WorkFlowChart',
