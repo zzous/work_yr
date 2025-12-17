@@ -1,7 +1,7 @@
 <template>
   <!-- 모달 -->
   <v-dialog v-model="dialog" width="600" persistent>
-    <v-card>
+    <v-card class="editwrap">
       <!-- 헤더 -->
       <v-card-title class="d-flex align-center justify-space-between pa-4">
         <span class="text-h6 font-weight-medium">{{ state.isEditMode ? 'WORK 수정' : 'WORK 등록' }}</span>
@@ -9,8 +9,6 @@
           <v-icon icon="mdi-close"></v-icon>
         </v-btn>
       </v-card-title>
-
-      <v-divider></v-divider>
 
       <v-card-text class="pa-4">
         <!-- 섹션 제목 -->
@@ -20,55 +18,58 @@
         </div>
 
         <v-form ref="workFormRef">
-          <v-row>
-            <!-- WORK 그룹명 -->
-            <v-col cols="12" class="d-flex align-center">
-              <label class="field-label mr-4">
-                WORK 그룹명 <span class="text-error">*</span>
-              </label>
-              <span>{{ state.itemInfo.groupName ?? '' }}</span>
-            </v-col>
-
+          <v-card-text>
+            <v-row>
+              <!-- WORK 그룹명 -->
+              <v-col cols="4">
+                WORK 그룹명<span class="required">*</span>
+              </v-col>
+              <v-col cols="6">
+                <span>{{ state.itemInfo.groupName ?? '' }}</span>
+              </v-col>
+            </v-row>
             <!-- WORK 선택 -->
-            <v-col cols="12" class="d-flex align-center">
-              <label class="field-label mr-4">
-                WORK 선택 <span class="text-error">*</span>
-              </label>
-              <v-select v-model="state.itemInfo.workCode" :items="workTypes" item-title="name" item-value="code"
-                variant="outlined" density="compact" placeholder="WORK 선택" hide-details="auto" class="flex-grow-1"
-                :rules="[v => !!v || 'WORK를 선택해주세요']"></v-select>
-            </v-col>
-
+            <v-row>
+              <v-col cols="4">
+                WORK 선택<span class="required">*</span>
+              </v-col>
+              <v-col cols="6" class="d-flex">
+                <v-select v-model="state.itemInfo.workCode" :items="workTypes" item-title="name" item-value="code"
+                  variant="outlined" density="compact" placeholder="WORK 선택" hide-details="auto"
+                  :rules="[v => !!v || 'WORK를 선택해주세요']"></v-select>
+              </v-col>
+            </v-row>
             <!-- 결제 여부 -->
-            <v-col cols="12" class="d-flex align-center">
-              <label class="field-label mr-4">
+            <v-row>
+              <v-col cols="4">
                 결제 여부
-              </label>
-              <span>결제 선택</span>
-              <v-checkbox v-model="state.itemInfo.approvalYn" hide-details></v-checkbox>
-            </v-col>
-
+              </v-col>
+              <v-col cols="6" class="d-flex align-center">
+                <span class="mr-0">결제 선택</span>
+                <v-checkbox v-model="state.itemInfo.approvalYn" hide-details></v-checkbox>
+              </v-col>
+            </v-row>
             <!-- WORK 설명 -->
-            <v-col cols="12" class="d-flex align-start">
-              <label class="field-label mr-4 mt-2">
-                WORK 설명
-              </label>
-              <v-textarea v-model="state.itemInfo.workDesc" variant="outlined" density="default"
-                placeholder="내용을 입력하세요." rows="4" hide-details="auto" class="flex-grow-1"></v-textarea>
-            </v-col>
-          </v-row>
+            <v-row>
+              <v-col cols="4">
+                WORK 설명<span class="required">*</span>
+              </v-col>
+              <v-col cols="6" class="d-flex align-start">
+                <v-textarea v-model="state.itemInfo.workDesc" variant="outlined" density="default"
+                  placeholder="내용을 입력하세요." rows="4" hide-details="auto" class="flex-grow-1"></v-textarea>
+              </v-col>
+            </v-row>
+          </v-card-text>
         </v-form>
       </v-card-text>
 
-      <v-divider></v-divider>
 
       <!-- 하단 버튼 -->
-      <v-card-actions class="pa-4">
-        <v-spacer></v-spacer>
-        <v-btn color="primary" variant="elevated" @click="onClickSave" prepend-icon="mdi-content-save">
+      <v-card-actions class="pa-4 d-flex justify-center gap-3">
+        <v-btn color="primary" variant="elevated" prepend-icon="mdi-content-save" @click="onClickSave">
           저장
         </v-btn>
-        <v-btn variant="outlined" color="grey" @click="closeModal" prepend-icon="mdi-close">
+        <v-btn variant="outlined" color="grey" prepend-icon="mdi-close" @click="closeModal">
           취소
         </v-btn>
       </v-card-actions>
@@ -100,7 +101,7 @@ export default {
       default: () => []
     }
   },
-  emits: ['update:ModelValue', 'saveWorkItem'],
+  emits: ['update:modelValue', 'saveWorkItem'],
   setup(props, { emit }) {
     const workFormRef = ref(null)
     const state = reactive({
@@ -152,7 +153,7 @@ export default {
         if (props.mode === 'edit' && props.itemInfo) {
           // 편집 모드일 때는 itemInfo 데이터 로드
           state.itemInfo.workCode = props.itemInfo.workCode || ''
-          state.itemInfo.approvalYn = props.itemInfo.approvalYn || 'N'
+          state.itemInfo.approvalYn = props.itemInfo.approvalYn === 'Y'
           state.itemInfo.workDesc = props.itemInfo.workDesc || ''
         } else {
           // 추가 모드일 때는 초기화

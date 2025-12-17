@@ -23,7 +23,6 @@
       </v-row>
 
       <!-- 테이블 -->
-
       <v-data-table :headers="headers" :items="workflows" :items-per-page="itemsPerPage" hide-default-footer>
         <template v-slot:item="{ item }">
           <tr>

@@ -1,23 +1,30 @@
 <template>
-  워크플로우 전체 - state.wfGroupList: {{ state.wfGroupList }}<br><br>
-  워크플로우 선택 - wfGroupList: {{ wfGroupList }}<br><br>
-  <div class="groups-container"
-    :class="{ 'single': state.wfGroupList.length == 1, 'double': state.wfGroupList.length >= 2 }">
+  <!-- 워크플로우 전체 - state.wfGroupList: {{ state.wfGroupList }}<br><br>
+  워크플로우 선택 - wfGroupList: {{ wfGroupList }}<br><br> -->
+  <div class="groups-container" :class="{
+    'single': state.wfGroupList.length == 1,
+    'double': state.wfGroupList.length >= 2 && state.wfGroupList.length < 4,
+    'canscroll': state.wfGroupList.length >= 4
+  }">
     <div class="group-wrap" v-for="(group, groupIdx) in state.wfGroupList" :key="groupIdx">
       <!-- 헤더 -->
       <div class="group-header">
         <h3 class="workflow-title">{{ group.groupName }}</h3>
         <div class="workflow-actions">
           <v-btn variant="outlined" color="white" size="small" class="mr-2" @click="onClickAddWork(groupIdx)">
-            + WORK 추가
+            +
+            <span v-if="state.wfGroupList.length < 4">WORK 추가</span>
+            <span v-else>W</span>
           </v-btn>
           <v-btn variant="outlined" color="white" size="small" @click="onClickDeleteGroup(groupIdx)">
-            - GROUP 삭제
+            -
+            <span v-if="state.wfGroupList.length < 4">GROUP 삭제</span>
+            <span v-else>G</span>
           </v-btn>
         </div>
       </div>
-      state.wfGroupList: {{ state.wfGroupList }}
-      state.wfGroupList: {{ state.wfGroupList.length }}
+      <!-- state.wfGroupList: {{ state.wfGroupList }}
+      state.wfGroupList: {{ state.wfGroupList.length }} -->
       <!-- 워크플로우 group내 item 카드들 -->
       <div class="items-wraps"
         :class="{ 'single': state.wfGroupList.length >= 2, 'double': state.wfGroupList.length == 1 }">
@@ -36,9 +43,10 @@
               WORK 설명
             </div>
             <div class="work-name">{{ item.workCode }}</div>
-            <v-icon icon="mdi-text-box-check-outline" size="18" class="mr-2"></v-icon>
-            <div class="work-type">WORK 컴포넌트</div>
-            <div class="work-name">{{ item.workDesc }}</div>
+            <div>
+              <v-icon icon="mdi-text-box-check-outline" size="18" class="mr-2 "></v-icon>
+              <div class="work-name">{{ item.workDesc }}</div>
+            </div>
             <div class="approval-type" v-if="item.approvalYn === 'Y'">
               <v-icon icon="mdi-account-check-outline" size="18" class="mr-2"></v-icon>
               결재
@@ -51,12 +59,14 @@
           </div>
 
           <!-- 액션 버튼 -->
-          <div class="stage-actions">
-            <v-btn icon size="small" variant="text" color="primary" @click="onClickEditItem(group, groupIdx, itemIdx)">
-              <v-icon icon="mdi-pencil" size="18"></v-icon>
+          <div class="item-btns">
+            <v-btn icon variant="outlined" color="primary" class="square-btn"
+              @click="onClickEditItem(groupIdx, itemIdx)">
+              <v-icon icon="mdi-text-box-edit-outline" size="18"></v-icon>
             </v-btn>
-            <v-btn icon size="small" variant="text" color="error" @click="onClickDeleteWork(group, groupIdx, itemIdx)">
-              <v-icon icon="mdi-delete" size="18"></v-icon>
+            <v-btn icon variant="outlined" color="primary" class="square-btn"
+              @click="onClickDeleteWork(groupIdx, itemIdx)">
+              <v-icon icon="mdi-trash-can-outline" size="18"></v-icon>
             </v-btn>
           </div>
         </div>
@@ -124,30 +134,18 @@ export default {
         groupItemIdx: -1, // 선택된 그룹 아이템 인덱스
         mode: 'add'
       },
-      // wfGroupItemList: [
-      //   {
-      //     workCode: '',
-      //     workDesc: '',
-      //     approvalYn: 'N',
-      //     displayOrder: 1,
-      //   }
-      // ],
     })
 
     // props.wfGroupList가 변경될 때 state.wfGroupList 업데이트
     watch(() => props.wfGroupList, (newList) => {
-      // 각 그룹에 wfGroupItemList가 없으면 초기화
+      // 각 그룹에 groupItemList가 없으면 초기화
       const updatedList = newList.map(group => ({
         ...group,
+        groupItemList: group.groupItemList || []
       }))
 
       state.wfGroupList = updatedList
-      emit('changeWorkflow', state.wfGroupList);
     }, { immediate: true, deep: true })
-
-    // watch(currentWork, (newVal) => {
-    //   console.log('### currentWork 변경: ', newVal)
-    // })
 
     // 현재 구성된 work enum 목록
     const workTypes = Object.values(WORK_TYPE).map(work => ({
@@ -164,19 +162,30 @@ export default {
 
     // 그룹 제거
     const onClickDeleteGroup = (groupIdx) => {
-      console.log('WORK 제거')
-      // WORK 제거 로직 구현
+      console.log('### 그룹 제거: ', groupIdx)
+      // 그룹 삭제
       state.wfGroupList.splice(groupIdx, 1);
-      // 선택 그룹 하위 WORK 제거
-      state.wfGroupList[groupIdx]?.groupItemList.forEach((item, itemIdx) => {
-        state.wfGroupList[groupIdx].groupItemList.splice(itemIdx, 1);
-      })
+
+      // 삭제된 그룹의 인덱스 초기화
+      if (state.currentInfo.groupIdx === groupIdx || state.currentInfo.groupIdx >= state.wfGroupList.length) {
+        state.currentInfo = {
+          groupIdx: -1,
+          groupName: '',
+          groupItemIdx: -1,
+          mode: 'add'
+        }
+      } else if (state.currentInfo.groupIdx > groupIdx) {
+        // 삭제된 그룹보다 뒤에 있는 그룹의 인덱스 계산
+        state.currentInfo.groupIdx = state.currentInfo.groupIdx - 1
+      }
+
       emit('changeWorkflow', state.wfGroupList);
       console.log('### 그룹 제거 후 state.wfGroupList: ', state.wfGroupList)
     }
 
     /* WORK 편집 버튼 이벤트 함수 */
     const onClickEditItem = (groupIdx, itemIdx) => {
+      console.log('### onClickEditItem: ', groupIdx, itemIdx)
       setCurrentInfo(groupIdx, itemIdx, 'edit');
       openEditWorkModal()
     }
@@ -193,11 +202,26 @@ export default {
         // 특정 item 삭제
         if (group.groupItemList && Array.isArray(group.groupItemList) && group.groupItemList.length > itemIdx) {
           group.groupItemList.splice(itemIdx, 1)
+
+          // 삭제된 item이 현재 편집 중인 item이면 currentInfo 초기화
+          if (state.currentInfo.groupIdx === groupIdx && state.currentInfo.groupItemIdx === itemIdx) {
+            state.currentInfo = {
+              groupIdx: -1,
+              groupName: '',
+              groupItemIdx: -1,
+              mode: 'add'
+            }
+          } else if (state.currentInfo.groupIdx === groupIdx && state.currentInfo.groupItemIdx > itemIdx) {
+            // 삭제된 item보다 뒤에 있는 item의 인덱스 조정
+            state.currentInfo.groupItemIdx = state.currentInfo.groupItemIdx - 1
+          }
         }
       } else {
         // 그룹 전체 삭제
         state.wfGroupList.splice(groupIdx, 1)
       }
+
+      emit('changeWorkflow', state.wfGroupList);
     }
 
     const setCurrentInfo = (groupIdx, groupItemIdx = -1, mode = 'add') => {
@@ -244,7 +268,21 @@ export default {
       } else if (state.currentInfo.mode === 'edit') {
         // item 수정
         console.log('### item: ', item)
-        group.groupItemList[state.currentInfo.groupIdx] = item
+        if (state.currentInfo.groupItemIdx >= 0 && group.groupItemList[state.currentInfo.groupItemIdx]) {
+          group.groupItemList[state.currentInfo.groupItemIdx] = {
+            workCode: item.workCode,
+            workDesc: item.workDesc || '',
+            approvalYn: item.approvalYn ? 'Y' : 'N',
+          }
+        }
+      }
+
+      // 저장 후 currentInfo 초기화
+      state.currentInfo = {
+        groupIdx: -1,
+        groupName: '',
+        groupItemIdx: -1,
+        mode: 'add'
       }
     }
 
@@ -256,97 +294,29 @@ export default {
       return findWork.name;
     }
 
-    // 현재 그룹에서 이미 사용된 workCode 목록 가져오기
+    // 이미 사용된 workCode 목록 찾기
     const getExcludedWorkCodes = () => {
       const excludedCodes = []
-      const currentGroup = state.wfGroupList[state.currentInfo.groupIdx]
+      const currentGroupIdx = state.currentInfo.groupIdx
+      const currentItemIdx = state.currentInfo.groupItemIdx
 
-      if (currentGroup && currentGroup.groupItemList) {
-        currentGroup.groupItemList.forEach((item, idx) => {
-          // 편집 모드일 때는 현재 편집 중인 item의 workCode는 제외하지 않음
-          if (state.currentInfo.groupItemIdx !== idx && item.workCode) {
-            excludedCodes.push(item.workCode)
-          }
-        })
-      }
+      // 모든 그룹 대상 조회함
+      state.wfGroupList.forEach((group, groupIdx) => {
+        if (group && group.groupItemList) {
+          group.groupItemList.forEach((item, itemIdx) => {
+            // 편집 모드일 때는 현재 편집 중인 item의 workCode는 제외하지 않음
+            if (item.workCode) {
+              const isCurrentEditingItem = (groupIdx === currentGroupIdx && itemIdx === currentItemIdx)
+              if (!isCurrentEditingItem) {
+                excludedCodes.push(item.workCode)
+              }
+            }
+          })
+        }
+      })
 
       return excludedCodes
     }
-
-
-
-    const updateWorkflow = (workflowData) => {
-      if (!workflowData || !workflowData.wfGroupList) return
-
-      workflowStages.value = []
-      currentWork.value = []
-
-      // workflowData.wfGroupList.forEach((group, groupIdx) => {
-      //   // workflowStages에 그룹 추가
-      //   workflowStages.value.push({
-      //     key: group.wfGroupName, // 그룹명을 key로 사용
-      //     title: group.wfGroupName,
-      //     icon: 'mdi-folder-outline', // 기본 아이콘
-      //     displayOrder: group.displayOrder || (groupIdx + 1),
-      //     wfGroupDesc: group.wfGroupDesc || ''
-      //   })
-
-      //   // currentWork에 각 그룹의 아이템들 추가
-      //   if (group.wfGroupItemList && Array.isArray(group.wfGroupItemList)) {
-      //     group.wfGroupItemList.forEach((item, itemIndex) => {
-      //       // workType code로 name 찾기
-      //       const workTypeInfo = workTypes.find(wt => wt.code === item.wfComponentsCode)
-
-      //       currentWork.value.push({
-      //         componentsCode: `${group.wfGroupName}-${itemIndex}`,
-      //         // groupCode: group.wfGroupName, // 그룹명을 stage로 사용
-      //         // name: workTypeInfo ? workTypeInfo.name : item.wfComponentsCode,
-      //         approvalYn: item.approvalYn || 'N',
-      //         groupItemDesc: item.wfGroupItemDesc || '',
-      //         // groupName: group.wfGroupName,
-      //         workType: item.wfComponentsCode,
-      //         displayOrder: item.displayOrder || (itemIndex + 1)
-      //       })
-      //     })
-      //   }
-      // })
-
-      console.log('### workflowStages 업데이트:', workflowStages.value)
-      console.log('### currentWork 업데이트:', currentWork.value)
-    }
-
-    // // JSON 구조로 변환하는 함수
-    // const convertToWorkflowDTO = (wfName, wfDesc, serviceGroupUuid) => {
-    //   // 그룹별로 work 데이터 그룹화
-    //   const groupMap = new Map()
-
-    //   currentWork.value.forEach((work, index) => {
-    //     const groupName = work.groupName
-    //     if (!groupMap.has(groupName)) {
-    //       groupMap.set(groupName, {
-    //         wfGroupName: groupName,
-    //         wfGroupDesc: '', // 그룹 설명은 별도로 관리 필요
-    //         displayOrder: props.workflowGroups.findIndex(g => g.name === groupName) + 1,
-    //         wfGroupItemList: []
-    //       })
-    //     }
-
-    //     const group = groupMap.get(groupName)
-    //     group.wfGroupItemList.push({
-    //       wfComponentsCode: work.workType, // code 값
-    //       wfGroupItemDesc: work.description || '',
-    //       approvalYn: work.paymentRequired ? 'Y' : 'N',
-    //       displayOrder: work.displayOrder || (group.wfGroupItemList.length + 1)
-    //     })
-    //   })
-
-    //   return {
-    //     wfName,
-    //     wfDesc,
-    //     serviceGroupUuid,
-    //     wfGroupList: Array.from(groupMap.values())
-    //   }
-    // }
 
     return {
       showAddWorkModal,
@@ -361,7 +331,6 @@ export default {
       onClickDeleteWork,
       onClickEditItem,
       getExcludedWorkCodes,
-      // convertToWorkflowDTO,
       WORK_TYPE,
     }
   }

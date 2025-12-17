@@ -1,37 +1,29 @@
 <template>
   <v-container class="editwrap">
-    <!-- 헤더 -->
-    <!-- <div class="d-flex align-center mb-4">
-      <v-icon icon="mdi-image-filter-none" size="24" class="mr-2"></v-icon>
-      <h2 class="text-h6 font-weight-medium">워크플로우 생성</h2>
-    </div> -->
     <div class="hwrap">
       <v-icon icon="mdi-image-filter-none" size="24" class="title-icon"></v-icon>
       <h2 class="title-text">워크플로우 생성</h2>
     </div>
 
-    <!-- 안내 박스 -->
-    <v-alert variant="tonal" class="notice-wrap mb-6" density="compact">
+    <!-- 노티박스 -->
+    <v-alert variant="tonal" class="notibox mb-6" density="compact">
       <div class="d-flex align-start">
-        <v-icon icon="mdi-text-box-edit-outline" class="mr-2 mt-1"></v-icon>
-        <div>
-          <div class="mb-2">
-            • 등록할 워크 플로우의 기본 정보 입력 후 워크 플로우를 지정할 수 있습니다.
-          </div>
-          <div>
-            • 워크 플로우는 "변경요청 등록" 으로 시작해서 "변경종료"로 끝나야 합니다.
-          </div>
+        <v-icon icon="mdi-text-box-edit-outline" size="33" class="noti-icon mr-3"></v-icon>
+        <div class="noti-text">
+          <p>- 등록할 워크 플로우의 기본 정보 입력 후 워크 플로우를 지정할 수 있습니다.</p>
+          <p>- 워크 플로우는 "변경요청 등록" 으로 시작해서 "변경종료"로 끝나야 합니다.</p>
         </div>
       </div>
     </v-alert>
-    wfGroupList:{{ wfGroupList }}
+    <!-- wfGroupList:{{ wfGroupList }}<br><br>
+    state.wfGroupList:{{ state.wfGroupList }} -->
 
     <!-- 워크플로우 기본 정보 -->
-    <v-card class="mb-6" elevation="1">
+    <v-card class="mb-6 pa-3" elevation="1">
       <v-card-text>
         <v-row>
           <v-col cols="2">
-            워크플로우명
+            워크플로우명 <span class="required">*</span>
           </v-col>
           <v-col cols="10">
             <v-text-field v-model="state.wfInfo.wfName" variant="outlined" density="compact" required
@@ -66,22 +58,21 @@
     </v-card>
     <!-- 워크플로우 설정 -->
     <v-card class="mb-6" elevation="1">
-      <v-card-title class="text-h6 font-weight-medium pa-4">
+      <v-card-title class="sub-title">
         워크플로우 설정
       </v-card-title>
       <v-card-text>
         <div v-if="wfGroupList.length === 0" class="text-center py-12">
-          <v-icon icon="mdi-image-outline" size="64" class="mb-4 text-medium-emphasis"></v-icon>
+          <v-icon icon="mdi-image-outline" size="40" class="mb-4 text-medium-emphasis"></v-icon>
           <div class="text-body-1 text-medium-emphasis">
             등록된 그룹이 없습니다. 그룹을 추가해 주세요.
           </div>
         </div>
-        <div v-else>
+        <div v-else class="pt-5 pb-10">
           <WorkFlowChart :wfGroupList="wfGroupList" @changeWorkflow="onChangeWorkflow" />
         </div>
       </v-card-text>
     </v-card>
-
     <!-- 하단 버튼 -->
     <div class="d-flex justify-center gap-4 mb-6">
       <v-btn prepend-icon="mdi-content-save" color="primary" variant="elevated" @click="saveWorkflow">
@@ -138,7 +129,7 @@ export default {
 
     // 저장
     const saveWorkflow = () => {
-      console.log('워크플로우 저장:', {
+      console.log('현재 수정 워크플로우 DB로 저장:', {
         wfName: state.wfInfo.wfName,
         wfDesc: state.wfInfo.wfDesc,
         wfGroupList: wfGroupList.value
@@ -151,12 +142,19 @@ export default {
       router.push('/')
     }
 
+    // WorkFlowChart에서 변경사항 반영
+    const onChangeWorkflow = (updatedGroupList) => {
+      wfGroupList.value = updatedGroupList
+      console.log('### onChangeWorkflow: ', updatedGroupList)
+    }
+
     return {
       state,
       wfGroupList,
       onClickAddGroup,
       saveWorkflow,
-      goToList
+      goToList,
+      onChangeWorkflow
     }
   }
 }
